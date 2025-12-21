@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrivacyCam - SNS画像加工アプリ</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <!-- Load face-api.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <main class="container">
+        <header>
+            <h1>PrivacyCam</h1>
+            <p>SNSアップロード用の安心・安全・おしゃれな画像加工ツール</p>
+        </header>
+
+        <div class="editor-layout">
+            <aside class="gallery-sidebar glass-panel">
+                <h3>画像リスト</h3>
+                <div id="thumbnailList" class="thumbnail-list">
+                    <!-- Thumbnails start here -->
+                </div>
+                <div class="sidebar-actions">
+                    <button id="addImagesBtn" class="secondary-btn small-btn">
+                        <span>+</span> 追加
+                    </button>
+                    <button id="downloadAllBtn" class="secondary-btn small-btn" title="すべての画像を保存">
+                        <span>⬇️</span> すべて保存
+                    </button>
+                </div>
+            </aside>
+
+            <section class="editor-main glass-panel">
+                <div class="toolbar">
+                    <div class="tool-group">
+                        <button class="tool-btn active" data-tool="mosaic" title="モザイク">
+                            <span class="icon">🌫️</span> モザイク
+                        </button>
+                        <button class="tool-btn" data-tool="emoji" title="絵文字">
+                            <span class="icon">☺️</span> 絵文字
+                        </button>
+                    </div>
+
+                    <div id="emoji-sub-selector" class="emoji-sub-selector hidden">
+                        <span class="emoji-option selected" data-char="☺️">☺️</span>
+                        <span class="emoji-option" data-char="😎">😎</span>
+                        <span class="emoji-option" data-char="🐱">🐱</span>
+                        <span class="emoji-option" data-char="random" title="ランダム">�</span>
+                        <input type="text" id="customEmojiInput" class="custom-emoji-input" placeholder="自由入力"
+                            maxlength="4">
+                    </div>
+
+                    <div class="action-group">
+                        <button id="downloadBtn" class="primary-btn small-btn">保存</button>
+                    </div>
+                </div>
+
+                <div class="canvas-container" id="canvasContainer">
+                    <div class="hero-upload" id="heroUpload">
+                        <div class="hero-content">
+                            <div class="hero-icon-wrapper">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <div class="hero-icon-badge">+</div>
+                            </div>
+                            <h2>写真をドロップして編集</h2>
+                            <p>AIが顔を自動検出。プライバシーを守りながら、<br>もっと楽しく、もっと自由に。</p>
+                            <button id="heroUploadBtn" class="primary-btn hero-btn">画像を選択</button>
+                        </div>
+                    </div>
+                    <canvas id="editorCanvas"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- Hidden input for adding more files -->
+        <input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+    </main>
+
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p id="loadingText">モデルを読み込み中...</p>
+    </div>
+
+    <script src="script.js" type="module"></script>
+</body>
+
+</html>
