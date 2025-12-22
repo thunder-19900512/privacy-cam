@@ -55,16 +55,26 @@
                         </button>
                     </div>
 
-                    <div id="emoji-sub-selector" class="emoji-sub-selector hidden">
+                    <!-- Mosaic Settings -->
+                    <div id="mosaic-sub-selector" class="sub-selector">
+                        <label class="slider-label">
+                            <span class="small-text">強度</span>
+                            <input type="range" id="mosaicIntensity" min="5" max="50" value="20">
+                        </label>
+                    </div>
+
+                    <!-- Emoji Settings -->
+                    <div id="emoji-sub-selector" class="sub-selector hidden">
                         <span class="emoji-option selected" data-char="☺️">☺️</span>
                         <span class="emoji-option" data-char="😎">😎</span>
                         <span class="emoji-option" data-char="🐱">🐱</span>
-                        <span class="emoji-option" data-char="random" title="ランダム">�</span>
+                        <span class="emoji-option" data-char="random" title="ランダム">🎲</span>
                         <input type="text" id="customEmojiInput" class="custom-emoji-input" placeholder="自由入力"
                             maxlength="4">
                     </div>
 
                     <div class="action-group">
+                        <input type="text" id="filenameInput" class="filename-input" placeholder="ファイル名 (任意)">
                         <button id="downloadBtn" class="primary-btn small-btn">保存</button>
                     </div>
                 </div>

@@ -214,6 +214,18 @@ header p {
     height: 120px;
     background: rgba(0, 0, 0, 0.2);
     flex-shrink: 0;
+    /* Drag & Drop */
+    user-select: none;
+}
+
+.thumb-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+    border-color: var(--accent-color);
+}
+
+.thumb-item.drag-over {
+    border-top: 2px solid var(--accent-color);
 }
 
 .thumb-item.active {
@@ -298,8 +310,8 @@ header p {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Emoji Sub Selector */
-.emoji-sub-selector {
+/* Sub Selector (Generic) */
+.sub-selector {
     display: flex;
     gap: 0.5rem;
     background: rgba(0, 0, 0, 0.2);
@@ -308,11 +320,34 @@ header p {
     margin-left: 0.5rem;
     animation: fadeIn 0.3s ease;
     align-items: center;
-    /* Center input */
 }
 
-.emoji-sub-selector.hidden {
+.sub-selector.hidden {
     display: none;
+}
+
+/* Specific adjustments if needed */
+#emoji-sub-selector {
+    /* keep if specific rules existed */
+}
+
+.slider-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.slider-label input[type="range"] {
+    width: 100px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.small-text {
+    font-size: 0.8rem;
+    white-space: nowrap;
 }
 
 .emoji-option {
@@ -357,6 +392,24 @@ header p {
     border-color: var(--primary-color);
     background: rgba(59, 130, 246, 0.2);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.filename-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 0.4rem 0.8rem;
+    color: white;
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+    width: 150px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.filename-input:focus {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Action Group (Right aligned) */

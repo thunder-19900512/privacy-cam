@@ -6,15 +6,16 @@ const state = {
     images: [], // { id, file, url, img, faceRegions: [], manualRegions: [] }
     currentImageId: null,
     tool: 'mosaic', // 'mosaic' | 'emoji'
-    selectedEmoji: '☺️',
+    selectedEmoji: '☺️', // can be 'random'
+    mosaicIntensity: 20, // default
     isProcessing: false,
     dragStart: null // {x, y}
 };
 
 const RANDOM_EMOJI_POOL = [
-    '☺️', '😎', '🐱', '🐶', '🦊', '🦁', '🐵', '🐼', '🐨', '🐯',
-    '😊', '🤣', '😍', '🤩', '🥳', '🥶', '😷', '🤠', '🤖', '👽',
-    '👹', '👺', '👻', '🐸', '🐷', '🐹', '🐰', '🐻', '🐤'
+    '🐱', '🐶', '🦊', '🦁', '🐵', '🐼', '🐨', '🐯',
+    '😊', '🥰', '😍', '🤩', '🥳', '🦄', '🌈', '💖',
+    '✨', '🎈', '🎉', '🍎', '🌻', '🍒', '🍓', '🐣'
 ];
 
 // --- DOM Elements ---
@@ -32,6 +33,9 @@ const dom = {
     loadingText: document.getElementById('loadingText'),
     toolBtns: document.querySelectorAll('.tool-btn'),
     emojiSubSelector: document.getElementById('emoji-sub-selector'),
+    mosaicSubSelector: document.getElementById('mosaic-sub-selector'),
+    mosaicIntensity: document.getElementById('mosaicIntensity'),
+    filenameInput: document.getElementById('filenameInput'),
     emojiOptions: document.querySelectorAll('.emoji-option'),
     customEmojiInput: document.getElementById('customEmojiInput')
 };
@@ -77,12 +81,19 @@ dom.toolBtns.forEach(btn => {
 
         if (state.tool === 'emoji') {
             dom.emojiSubSelector.classList.remove('hidden');
+            dom.mosaicSubSelector.classList.add('hidden');
         } else {
             dom.emojiSubSelector.classList.add('hidden');
+            dom.mosaicSubSelector.classList.remove('hidden');
         }
 
         applyToolToCurrentFaces();
     });
+});
+
+dom.mosaicIntensity.addEventListener('input', (e) => {
+    state.mosaicIntensity = parseInt(e.target.value, 10);
+    render();
 });
 
 dom.emojiOptions.forEach(opt => {
@@ -94,10 +105,8 @@ dom.emojiOptions.forEach(opt => {
         const char = e.target.dataset.char;
 
         if (char === 'random') {
+            state.selectedEmoji = 'random';
             applyRandomEmojis();
-            // Don't change 'selectedEmoji' globally to 'random', just apply it.
-            // But if user clicks manual region, what to use? 'random' or last selected?
-            // Let's set a flag or just keep last selected for manual.
         } else {
             state.selectedEmoji = char;
             if (state.tool === 'emoji') applyToolToCurrentFaces();
@@ -143,7 +152,11 @@ function applyToolToCurrentFaces() {
     data.faceRegions.forEach(face => {
         face.effect = state.tool;
         if (state.tool === 'emoji') {
-            face.emoji = state.selectedEmoji;
+            if (state.selectedEmoji === 'random') {
+                face.emoji = RANDOM_EMOJI_POOL[Math.floor(Math.random() * RANDOM_EMOJI_POOL.length)];
+            } else {
+                face.emoji = state.selectedEmoji;
+            }
         }
     });
     render();
@@ -153,18 +166,17 @@ function applyRandomEmojis() {
     const data = getCurrentData();
     if (!data) return;
 
+    // Switch tool if needed
+    if (state.tool !== 'emoji') {
+        state.tool = 'emoji';
+        document.querySelector('[data-tool="emoji"]').click();
+        // The click handler calls applyToolToCurrentFaces, which handles random if state.selectedEmoji is 'random'
+        return;
+    }
+
+    // Force re-roll even if already emoji
     data.faceRegions.forEach(face => {
-        if (face.effect === 'none') {
-            face.effect = 'emoji'; // Force enable if random clicked
-        }
-        // If current tool is mosaic, switch to emoji? User clicked Random Emoji button.
-        if (state.tool !== 'emoji') {
-            // Switch UI
-            state.tool = 'emoji';
-            document.querySelector('[data-tool="emoji"]').click(); // cheap way to update UI
-            return; // click handler will recurse but won't trigger random.
-        }
-        // Assign random
+        face.effect = 'emoji';
         face.emoji = RANDOM_EMOJI_POOL[Math.floor(Math.random() * RANDOM_EMOJI_POOL.length)];
     });
     render();
@@ -229,7 +241,57 @@ function addThumbnail(imageObj) {
         </div>
     `;
 
+    // Drag & Drop for reordering
+    div.draggable = true;
+    div.addEventListener('dragstart', handleThumbDragStart);
+    div.addEventListener('dragover', handleThumbDragOver);
+    div.addEventListener('drop', handleThumbDrop);
+    div.addEventListener('dragend', handleThumbDragEnd);
+
     dom.thumbnailList.appendChild(div);
+}
+
+// --- Sidebar Drag & Drop Logic ---
+let draggedItem = null;
+
+function handleThumbDragStart(e) {
+    draggedItem = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleThumbDragOver(e) {
+    e.preventDefault();
+    if (this === draggedItem) return;
+    this.classList.add('drag-over');
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleThumbDragEnd(e) {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.thumb-item').forEach(item => item.classList.remove('drag-over'));
+    draggedItem = null;
+}
+
+function handleThumbDrop(e) {
+    e.stopPropagation(); // Stop firing on body
+    if (draggedItem !== this) {
+        // Reorder DOM
+        const allItems = [...dom.thumbnailList.querySelectorAll('.thumb-item')];
+        const fromIndex = allItems.indexOf(draggedItem);
+        const toIndex = allItems.indexOf(this);
+
+        if (fromIndex < toIndex) {
+            this.after(draggedItem);
+        } else {
+            this.before(draggedItem);
+        }
+
+        // Reorder State
+        const movedImage = state.images.splice(fromIndex, 1)[0];
+        state.images.splice(toIndex, 0, movedImage);
+    }
+    return false;
 }
 
 function selectImage(id) {
@@ -261,6 +323,7 @@ function getCanvasCoords(e) {
 
 function handleCanvasDown(e) {
     if (!getCurrentData()) return;
+    // Account for scroll if necessary, but canvas container is usually fixed relative to viewport
     state.dragStart = getCanvasCoords(e);
 }
 
@@ -296,7 +359,11 @@ function handleClick(pos) {
             clickedFace.effect = 'none';
         } else {
             clickedFace.effect = state.tool;
-            if (state.tool === 'emoji') clickedFace.emoji = state.selectedEmoji;
+            if (state.tool === 'emoji') {
+                clickedFace.emoji = state.selectedEmoji === 'random'
+                    ? RANDOM_EMOJI_POOL[Math.floor(Math.random() * RANDOM_EMOJI_POOL.length)]
+                    : state.selectedEmoji;
+            }
         }
         render();
         return;
@@ -324,7 +391,9 @@ function handleDrag(start, end) {
         type: 'manual',
         box: { x, y, width, height },
         effect: state.tool,
-        emoji: state.selectedEmoji
+        emoji: state.tool === 'emoji' && state.selectedEmoji === 'random'
+            ? RANDOM_EMOJI_POOL[Math.floor(Math.random() * RANDOM_EMOJI_POOL.length)]
+            : state.selectedEmoji
     });
     render();
 }
@@ -366,7 +435,20 @@ function render(targetData = null, targetCtx = null) {
 
 function applyMosaic(ctx, box) {
     const { x, y, width, height } = box;
-    const blockSize = Math.max(8, Math.floor(width / 12));
+    // Use state.mosaicIntensity directly
+    // Map existing 5-50 range to block size. 
+    // If width is small, we need minimum block size.
+    // Let's just use the intensity as block size directly for simplicity, or scale it.
+    // User wants "Strength". Small block size = weak mosaic? No, small blocks = clearer image = weak mosaic.
+    // Large blocks = stronger mosaic.
+    // So intensity 5 (weak) -> 5px blocks? Or maybe relative to image size?
+    // Let's stick to absolute pixel size for consistency across faces, or maybe relative.
+    // Previous calc: Math.max(8, Math.floor(width / 12));
+    // Let's use the slider value as the divider? No, User expects slider up = stronger.
+    // Stronger = Larger blocks.
+    // Let's use slider value as approximate block size in pixels, but scaled a bit?
+    // Slider 5 to 50.
+    const blockSize = Math.max(4, state.mosaicIntensity);
 
     for (let by = y; by < y + height; by += blockSize) {
         for (let bx = x; bx < x + width; bx += blockSize) {
@@ -395,8 +477,9 @@ function downloadCurrentImage() {
     const data = getCurrentData();
     if (!data) return;
 
+    const baseName = dom.filenameInput.value.trim() || 'privacy-cam';
     const link = document.createElement('a');
-    link.download = `privacy-cam-${Date.now()}.png`;
+    link.download = `${baseName}-${Date.now()}.png`;
     link.href = dom.canvas.toDataURL('image/png');
     link.click();
 }
@@ -404,13 +487,12 @@ function downloadCurrentImage() {
 async function downloadAllImages() {
     if (state.images.length === 0) return;
 
-    const originalId = state.currentImageId;
     dom.loadingText.textContent = 'すべての画像を処理中...';
     dom.loadingOverlay.classList.remove('hidden');
 
-    // Process using offscreen canvas to avoid flickering
     const offCanvas = document.createElement('canvas');
     const offCtx = offCanvas.getContext('2d');
+    const baseName = dom.filenameInput.value.trim() || 'privacy-cam';
 
     for (let i = 0; i < state.images.length; i++) {
         const imgData = state.images[i];
@@ -424,7 +506,8 @@ async function downloadAllImages() {
 
         const link = document.createElement('a');
         link.href = url;
-        link.download = `privacy-cam-${i + 1}-${Date.now()}.png`;
+        // Format: filename-1, filename-2 ...
+        link.download = `${baseName}-${i + 1}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
