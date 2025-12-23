@@ -37,7 +37,8 @@ const dom = {
     mosaicIntensity: document.getElementById('mosaicIntensity'),
     filenameInput: document.getElementById('filenameInput'),
     emojiOptions: document.querySelectorAll('.emoji-option'),
-    customEmojiInput: document.getElementById('customEmojiInput')
+    customEmojiInput: document.getElementById('customEmojiInput'),
+    themeToggle: document.getElementById('themeToggleBtn')
 };
 
 const ctx = dom.canvas.getContext('2d');
@@ -53,6 +54,25 @@ async function init() {
     }
 }
 init();
+
+// --- Theme Toggling ---
+function initTheme() {
+    const savedTheme = localStorage.getItem('privacyCamTheme');
+    if (savedTheme === 'retro') {
+        document.body.classList.add('theme-retro');
+        dom.themeToggle.textContent = '🦄'; // Icon to switch back to modern
+    } else {
+        dom.themeToggle.textContent = '💾'; // Icon to switch to retro
+    }
+}
+initTheme();
+
+dom.themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('theme-retro');
+    const isRetro = document.body.classList.contains('theme-retro');
+    localStorage.setItem('privacyCamTheme', isRetro ? 'retro' : 'modern');
+    dom.themeToggle.textContent = isRetro ? '🦄' : '💾';
+});
 
 // --- Event Listeners ---
 

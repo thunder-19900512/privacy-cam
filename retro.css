@@ -1,0 +1,155 @@
+/* Retro Windows Theme (95/98/2000 Style) */
+
+.theme-retro {
+    --bg-color: #008080;
+    /* Windows Teal */
+    --text-color: #000000;
+    --glass-bg: #c0c0c0;
+    /* Classic Grey */
+    --glass-border: #ffffff;
+    /* Use for highlight */
+    --primary-color: #000080;
+    /* Navy Blue */
+    --primary-hover: #0000a0;
+    --accent-color: #808080;
+    --radius-lg: 0;
+    --radius-md: 0;
+    --font-main: "MS UI Gothic", "ＭＳ Ｐゴシック", sans-serif;
+}
+
+.theme-toggle-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.theme-toggle-btn:hover {
+    opacity: 1;
+}
+
+/* Retro specific overrides */
+body.theme-retro .background-blobs {
+    display: none;
+    /* No blobs in retro land */
+}
+
+body.theme-retro header h1 {
+    background: #000080;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    color: white;
+    padding: 2px 5px;
+    display: inline-block;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+body.theme-retro header {
+    text-align: left;
+    margin-bottom: 2rem;
+}
+
+body.theme-retro header p {
+    color: black;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+body.theme-retro .glass-panel {
+    border: 2px outset #ffffff;
+    box-shadow: 2px 2px 0px #000000;
+    /* Drop shadow hard */
+}
+
+body.theme-retro .primary-btn,
+body.theme-retro .secondary-btn,
+body.theme-retro .tool-btn {
+    background: #c0c0c0;
+    color: black;
+    border: 2px outset #ffffff;
+    border-radius: 0;
+    box-shadow: 1px 1px 0px #000000;
+    font-family: "MS UI Gothic", sans-serif;
+}
+
+body.theme-retro .primary-btn:active,
+body.theme-retro .secondary-btn:active,
+body.theme-retro .tool-btn:active,
+body.theme-retro .tool-btn.active {
+    border: 2px inset #ffffff;
+    background: #e0e0e0;
+    /* Dotted pattern simulated by lighter grey? or just grey */
+    transform: none;
+    /* No bounce */
+    box-shadow: none;
+}
+
+/* Specific active state for tool buttons in retro */
+body.theme-retro .tool-btn.active {
+    background: #ffffff;
+    border: 2px inset #ffffff;
+    font-weight: bold;
+}
+
+/* Inputs */
+body.theme-retro input[type="text"],
+body.theme-retro .filename-input,
+body.theme-retro .custom-emoji-input {
+    background: white;
+    border: 2px inset #ffffff;
+    color: black;
+    border-radius: 0;
+}
+
+/* Thumbnails */
+body.theme-retro .thumb-item {
+    border: 2px inset #ffffff;
+    border-radius: 0;
+}
+
+body.theme-retro .thumb-item.active {
+    border: 2px solid #000080;
+    /* Blue highlight */
+    outline: 1px dotted white;
+}
+
+/* Sub-selectors */
+body.theme-retro .sub-selector,
+body.theme-retro .tool-group {
+    background: transparent;
+    border: none;
+}
+
+/* Canvas Container */
+body.theme-retro .canvas-container {
+    border: 2px inset #ffffff;
+    background: #808080;
+    /* Darker grey background for app workspace */
+}
+
+/* Range Slider (Mosaic) - try to make it look old school */
+body.theme-retro input[type="range"] {
+    -webkit-appearance: none;
+    background: transparent;
+}
+
+body.theme-retro input[type="range"]::-webkit-slider-runnable-track {
+    background: #000000;
+    height: 2px;
+}
+
+body.theme-retro input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    background: #c0c0c0;
+    border: 2px outset #ffffff;
+    width: 15px;
+    height: 20px;
+    margin-top: -8px;
+}
