@@ -375,7 +375,7 @@ function handleClick(pos) {
 
     if (clickedFace) {
         if (clickedFace.effect === state.tool &&
-            (state.tool !== 'emoji' || clickedFace.emoji === state.selectedEmoji)) {
+            (state.tool !== 'emoji' || state.selectedEmoji === 'random' || clickedFace.emoji === state.selectedEmoji)) {
             clickedFace.effect = 'none';
         } else {
             clickedFace.effect = state.tool;
