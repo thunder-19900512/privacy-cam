@@ -38,7 +38,9 @@ const dom = {
     filenameInput: document.getElementById('filenameInput'),
     emojiOptions: document.querySelectorAll('.emoji-option'),
     customEmojiInput: document.getElementById('customEmojiInput'),
-    themeToggle: document.getElementById('themeToggleBtn')
+    themeToggle: document.getElementById('themeToggleBtn'),
+    sizeLimitEnabled: document.getElementById('sizeLimitEnabled'),
+    sizeLimitValue: document.getElementById('sizeLimitValue')
 };
 
 const ctx = dom.canvas.getContext('2d');
@@ -493,15 +495,67 @@ function applyEmoji(ctx, box, char) {
     ctx.fillText(char || '☺️', cx, cy);
 }
 
-function downloadCurrentImage() {
+async function getResizedBlob(canvas, targetMB) {
+    const targetBytes = targetMB * 1024 * 1024;
+    let scale = 1.0;
+
+    // Initial check
+    let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (blob.size <= targetBytes) return blob;
+
+    // Iteratively downscale
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // Max 10 attempts to avoid infinite loop or too much lag
+    for (let i = 0; i < 10; i++) {
+        scale *= 0.8; // Reduce scale more aggressively to reach target faster
+        tempCanvas.width = canvas.width * scale;
+        tempCanvas.height = canvas.height * scale;
+        tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+        // Use better image smoothing
+        tempCtx.imageSmoothingEnabled = true;
+        tempCtx.imageSmoothingQuality = 'high';
+
+        tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+        blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
+
+        if (blob.size <= targetBytes) break;
+    }
+
+    return blob;
+}
+
+async function downloadCurrentImage() {
     const data = getCurrentData();
     if (!data) return;
 
-    const baseName = dom.filenameInput.value.trim() || 'privacy-cam';
-    const link = document.createElement('a');
-    link.download = `${baseName}-${Date.now()}.png`;
-    link.href = dom.canvas.toDataURL('image/png');
-    link.click();
+    dom.loadingText.textContent = '画像を処理中...';
+    dom.loadingOverlay.classList.remove('hidden');
+
+    try {
+        const baseName = dom.filenameInput.value.trim() || 'privacy-cam';
+        let blob;
+
+        if (dom.sizeLimitEnabled.checked) {
+            const limit = parseFloat(dom.sizeLimitValue.value) || 0.5;
+            blob = await getResizedBlob(dom.canvas, limit);
+        } else {
+            blob = await new Promise(resolve => dom.canvas.toBlob(resolve, 'image/png'));
+        }
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${baseName}-${Date.now()}.png`;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        dom.loadingOverlay.classList.add('hidden');
+    }
 }
 
 async function downloadAllImages() {
@@ -521,7 +575,14 @@ async function downloadAllImages() {
 
         render(imgData, offCtx);
 
-        const blob = await new Promise(resolve => offCanvas.toBlob(resolve, 'image/png'));
+        let blob;
+        if (dom.sizeLimitEnabled.checked) {
+            const limit = parseFloat(dom.sizeLimitValue.value) || 0.5;
+            blob = await getResizedBlob(offCanvas, limit);
+        } else {
+            blob = await new Promise(resolve => offCanvas.toBlob(resolve, 'image/png'));
+        }
+
         const url = URL.createObjectURL(blob);
 
         const link = document.createElement('a');
@@ -531,6 +592,7 @@ async function downloadAllImages() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
         // Small delay to prevent browser throttling downloads
         await new Promise(r => setTimeout(r, 500));

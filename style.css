@@ -327,9 +327,6 @@ header p {
 }
 
 /* Specific adjustments if needed */
-#emoji-sub-selector {
-    /* keep if specific rules existed */
-}
 
 .slider-label {
     display: flex;
@@ -415,6 +412,42 @@ header p {
 /* Action Group (Right aligned) */
 .action-group {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.size-limit-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-md);
+}
+
+.size-input {
+    width: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    border-radius: 4px;
+    color: white;
+    padding: 2px 4px;
+    font-size: 0.9rem;
+    outline: none;
+    text-align: center;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+}
+
+.checkbox-container input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: var(--primary-color);
 }
 
 /* Canvas Area */
@@ -595,4 +628,100 @@ canvas {
     align-items: center;
     justify-content: center;
     gap: 0.3rem;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .container {
+        padding: 1rem;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .editor-layout {
+        flex-direction: column-reverse;
+        /* Sidebar moves to bottom */
+        height: auto;
+    }
+
+    .gallery-sidebar {
+        width: 100%;
+        height: 250px;
+    }
+
+    .thumbnail-list {
+        flex-direction: row;
+        overflow-y: hidden;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+    .thumb-item {
+        width: 150px;
+        height: 100px;
+        flex-shrink: 0;
+    }
+
+    .toolbar {
+        flex-wrap: wrap;
+    }
+
+    .action-group {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--glass-border);
+    }
+
+    .canvas-container {
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    .hero-content {
+        padding: 1.5rem;
+    }
+
+    .tool-btn {
+        padding: 0.5rem 0.7rem;
+        font-size: 0.8rem;
+    }
+
+    .tool-group {
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .sub-selector {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 0.5rem;
+        justify-content: center;
+    }
+
+    .size-limit-group {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .filename-input {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .action-group {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .primary-btn.small-btn {
+        width: 100%;
+        padding: 0.8rem;
+    }
 }

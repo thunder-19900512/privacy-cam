@@ -153,3 +153,30 @@ body.theme-retro input[type="range"]::-webkit-slider-thumb {
     height: 20px;
     margin-top: -8px;
 }
+
+/* Size Limit Retro */
+body.theme-retro .size-limit-group {
+    background: #c0c0c0;
+    border: none;
+    padding: 2px;
+}
+
+body.theme-retro .size-input {
+    background: white;
+    border: 2px inset #ffffff;
+    color: black;
+    border-radius: 0;
+    font-family: inherit;
+    width: 50px;
+}
+
+body.theme-retro .small-text {
+    color: black;
+    font-size: 11px;
+}
+
+body.theme-retro .checkbox-container input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    vertical-align: middle;
+}
