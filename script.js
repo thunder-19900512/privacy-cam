@@ -204,48 +204,96 @@ function applyRandomEmojis() {
     render();
 }
 
+// Convert HEIC to JPEG if needed
+async function convertHeicIfNeeded(file) {
+    const fileName = file.name.toLowerCase();
+    const isHeic = fileName.endsWith('.heic') || fileName.endsWith('.heif');
+
+    if (!isHeic) {
+        return file;
+    }
+
+    try {
+        // Convert HEIC to JPEG
+        const convertedBlob = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.9
+        });
+
+        // heic2any might return an array of blobs, so handle both cases
+        const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+
+        // Create a new File object with the converted blob
+        const convertedFile = new File(
+            [blob],
+            file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'),
+            { type: 'image/jpeg' }
+        );
+
+        return convertedFile;
+    } catch (error) {
+        console.error('HEIC conversion failed:', error);
+        throw new Error('HEIC画像の変換に失敗しました。');
+    }
+}
+
 async function handleFiles(files) {
     if (!files.length) return;
 
     dom.loadingText.textContent = '画像を読み込み・解析中...';
     dom.loadingOverlay.classList.remove('hidden');
 
-    for (const file of Array.from(files)) {
-        const id = Date.now() + Math.random().toString(36).substr(2, 9);
-        const url = URL.createObjectURL(file);
-        const img = await loadImage(url);
+    try {
+        for (const originalFile of Array.from(files)) {
+            // Convert HEIC if needed
+            const file = await convertHeicIfNeeded(originalFile);
 
-        // Detect Faces
-        const detections = await faceapi.detectAllFaces(img, new faceapi.SsdMobilenetv1Options());
+            const id = Date.now() + Math.random().toString(36).substr(2, 9);
+            const url = URL.createObjectURL(file);
+            const img = await loadImage(url);
 
-        const faceRegions = detections.map(d => ({
-            type: 'face',
-            box: d.box,
-            effect: state.tool,
-            emoji: state.selectedEmoji
-        }));
+            // Detect Faces
+            const detections = await faceapi.detectAllFaces(img, new faceapi.SsdMobilenetv1Options());
 
-        const imageObj = {
-            id, file, url, img,
-            faceRegions,
-            manualRegions: [],
-            originalDims: { w: img.width, h: img.height }
-        };
+            const faceRegions = detections.map(d => ({
+                type: 'face',
+                box: d.box,
+                effect: state.tool,
+                emoji: state.selectedEmoji
+            }));
 
-        state.images.push(imageObj);
-        addThumbnail(imageObj);
+            const imageObj = {
+                id, file, url, img,
+                faceRegions,
+                manualRegions: [],
+                originalDims: { w: img.width, h: img.height }
+            };
 
-        // Select last added
-        selectImage(id);
+            state.images.push(imageObj);
+            addThumbnail(imageObj);
+
+            // Select last added
+            selectImage(id);
+        }
+    } catch (error) {
+        console.error('Error processing files:', error);
+        dom.loadingText.textContent = error.message || '画像の処理に失敗しました。';
+        // Keep overlay visible for 3 seconds to show error
+        setTimeout(() => {
+            dom.loadingOverlay.classList.add('hidden');
+        }, 3000);
+        return;
     }
 
     dom.loadingOverlay.classList.add('hidden');
 }
 
 function loadImage(src) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('画像の読み込みに失敗しました。'));
         img.src = src;
     });
 }

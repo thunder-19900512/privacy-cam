@@ -14,6 +14,8 @@
         rel="stylesheet">
     <!-- Load face-api.js -->
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <!-- Load heic2any for HEIC support -->
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 </head>
 
 <body>
@@ -112,7 +114,7 @@
         </div>
 
         <!-- Hidden input for adding more files -->
-        <input type="file" id="fileInput" accept="image/*" multiple hidden>
+        <input type="file" id="fileInput" accept="image/*,.heic,.heif" multiple hidden>
 
     </main>
 
