@@ -650,74 +650,10 @@ async function downloadAllImages() {
 }
 
 
-// --- Modal Handling ---
-function initModals() {
-    const termsModal = document.getElementById('termsModal');
-    const privacyModal = document.getElementById('privacyModal');
-    const termsLink = document.getElementById('termsLink');
-    const privacyLink = document.getElementById('privacyLink');
-    const modalCloseButtons = document.querySelectorAll('.modal-close');
-
-    if (!termsModal || !privacyModal || !termsLink || !privacyLink) {
-        console.warn('Modal elements not found, retrying in 100ms...');
-        setTimeout(initModals, 100);
-        return;
-    }
-
-    // Open modals
-    termsLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        termsModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden'; // Prevent scroll
-    });
-
-    privacyLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        privacyModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden'; // Prevent scroll
-    });
-
-    // Close function
-    const closeModal = (modal) => {
-        if (modal) {
-            modal.classList.add('hidden');
-            // Only restore overflow if no other modal is open
-            if (!document.querySelector('.modal:not(.hidden)')) {
-                document.body.style.overflow = '';
-            }
-        }
-    };
-
-    // Close button events
-    modalCloseButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const modalId = btn.dataset.modal;
-            closeModal(document.getElementById(modalId));
-        });
-    });
-
-    // Background click close
-    [termsModal, privacyModal].forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal(modal);
-            }
-        });
-    });
-
-    // Escape key close
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeModal(termsModal);
-            closeModal(privacyModal);
-        }
-    });
-}
-
-// Start modal initialization
+// Start initialization
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initModals);
-} else {
-    initModals();
+    document.addEventListener('DOMContentLoaded', () => {
+        // init any other features if needed
+    });
 }
 
