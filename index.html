@@ -116,11 +116,81 @@
         <!-- Hidden input for adding more files -->
         <input type="file" id="fileInput" accept="image/*,.heic,.heif" multiple hidden>
 
+        <footer class="app-footer">
+            <div class="footer-links">
+                <a href="#" id="termsLink" class="footer-link">利用規約</a>
+                <span class="footer-separator">|</span>
+                <a href="#" id="privacyLink" class="footer-link">プライバシーポリシー</a>
+            </div>
+        </footer>
+
     </main>
 
     <div id="loadingOverlay" class="loading-overlay hidden">
         <div class="spinner"></div>
         <p id="loadingText">モデルを読み込み中...</p>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div id="termsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>利用規約</h2>
+                <button class="modal-close" data-modal="termsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <section>
+                    <h3>本サービスの提供</h3>
+                    <p>本サービスは、ブラウザ上で画像加工を行うツールを提供します。</p>
+                </section>
+
+                <section>
+                    <h3>免責事項</h3>
+                    <ul>
+                        <li>本サービスはAIによる自動検出を利用していますが、その正確性や完全性を保証するものではありません。</li>
+                        <li>ユーザーは、加工後の画像を自らの責任において確認・使用するものとします。</li>
+                        <li>本サービスの利用により生じた直接的、間接的な損害（プライバシーの侵害、データの消失等）について、開発者は一切の責任を負いません。</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>禁止事項</h3>
+                    <p>本サービスのネットワークまたはシステムへの不正アクセス、その他運営を妨害する行為を禁止します。</p>
+                </section>
+
+                <section>
+                    <h3>規約の変更</h3>
+                    <p>開発者は、必要と判断した場合には、いつでも本規約を変更することができるものとします。</p>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacyModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>プライバシーポリシー</h2>
+                <button class="modal-close" data-modal="privacyModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <section>
+                    <h3>画像データの取り扱い</h3>
+                    <p>本サービスでアップロードされた画像データは、すべてユーザーのブラウザ上（クライアントサイド）で処理されます。<strong>画像データが外部サーバーに送信されたり、保存されたりすることはありません。</strong>
+                    </p>
+                </section>
+
+                <section>
+                    <h3>個人情報の収集</h3>
+                    <p>本サービスでは、アクセス解析ツールや広告配信、Cookieによる個人情報の収集は行っておりません。</p>
+                </section>
+
+                <section>
+                    <h3>法令の遵守</h3>
+                    <p>本サービスは、日本国内の法令を遵守して運営されます。</p>
+                </section>
+            </div>
+        </div>
     </div>
 
     <script src="script.js" type="module"></script>
