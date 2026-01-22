@@ -755,36 +755,15 @@ canvas {
     color: #475569;
 }
 
-/* Support Link Styles */
-.support-section {
-    margin-bottom: 0.75rem;
+/* Support Link Styles (Subtle) */
+.support-link-text {
+    opacity: 0.8;
 }
 
-.support-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 189, 0, 0.1);
-    /* Subtle BMC orange */
-    border: 1px solid rgba(255, 189, 0, 0.2);
-    border-radius: 50px;
-    color: #ffbd00;
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.support-link:hover {
-    background: rgba(255, 189, 0, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 189, 0, 0.15);
-    border-color: rgba(255, 189, 0, 0.4);
-}
-
-.support-link span {
-    color: #ffbd00;
+.support-link-text:hover {
+    color: #ffbd00 !important;
+    /* BMC Yellow only on hover */
+    opacity: 1;
 }
 
 /* Modal Styles */
