@@ -478,7 +478,8 @@ function handleLongPress(pos) {
     if (!data) return;
 
     // 1. Check if we should delete an existing region
-    const HIT_MARGIN = 20;
+    const minDim = Math.min(dom.canvas.width, dom.canvas.height);
+    const HIT_MARGIN = Math.max(20, minDim * 0.03); // Scale margin with image size, min 20px
     // Priority: Manual regions first (they are usually on top)
     const manualIdx = data.manualRegions.findIndex(r =>
         pos.x >= r.box.x - HIT_MARGIN && pos.x <= r.box.x + r.box.width + HIT_MARGIN &&
@@ -527,7 +528,8 @@ function handleLongPress(pos) {
 
 function handleClick(pos) {
     const data = getCurrentData();
-    const HIT_MARGIN = 20; // Extra margin to make it easier to tap small regions
+    const minDim = Math.min(dom.canvas.width, dom.canvas.height);
+    const HIT_MARGIN = Math.max(20, minDim * 0.03); // Scale margin with image size, min 20px
 
     // Priority: Manual regions first (they are usually on top)
     const clickedManualIdx = data.manualRegions.findIndex(r =>
@@ -569,8 +571,9 @@ function handleDrag(start, end) {
     const width = Math.abs(start.x - end.x);
     const height = Math.abs(start.y - end.y);
 
-    // Prevent creation of tiny regions (below 20px)
-    if (width < 20 || height < 20) return;
+    // Prevent creation of tiny regions (below 3% of the smallest dimension)
+    const minSize = Math.min(dom.canvas.width, dom.canvas.height) * 0.03;
+    if (width < minSize || height < minSize) return;
 
     data.manualRegions.push({
         type: 'manual',
