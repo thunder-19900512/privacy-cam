@@ -161,6 +161,23 @@ dom.canvas.addEventListener('mousedown', handleCanvasDown);
 dom.canvas.addEventListener('mousemove', handleCanvasMove);
 dom.canvas.addEventListener('mouseup', handleCanvasUp);
 
+// Touch Support
+dom.canvas.addEventListener('touchstart', (e) => {
+    // Prevent scrolling when touching the canvas to allow editing
+    if (state.currentImageId) e.preventDefault();
+    handleCanvasDown(e);
+}, { passive: false });
+
+dom.canvas.addEventListener('touchmove', (e) => {
+    if (state.currentImageId) e.preventDefault();
+    handleCanvasMove(e);
+}, { passive: false });
+
+dom.canvas.addEventListener('touchend', (e) => {
+    if (state.currentImageId) e.preventDefault();
+    handleCanvasUp(e);
+}, { passive: false });
+
 // 4. Download
 dom.downloadBtn.addEventListener('click', downloadCurrentImage);
 dom.downloadAllBtn.addEventListener('click', downloadAllImages);
@@ -380,26 +397,66 @@ function getCurrentData() {
 }
 
 // --- Interaction Logic ---
+let longPressTimer = null;
+const LONG_PRESS_DURATION = 500; // ms
 
 function getCanvasCoords(e) {
     const rect = dom.canvas.getBoundingClientRect();
     const scaleX = dom.canvas.width / rect.width;
     const scaleY = dom.canvas.height / rect.height;
+
+    let clientX, clientY;
+    // Check for touch first
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else if (e.changedTouches && e.changedTouches.length > 0) {
+        clientX = e.changedTouches[0].clientX;
+        clientY = e.changedTouches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+
     return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
     };
 }
 
 function handleCanvasDown(e) {
     if (!getCurrentData()) return;
-    // Account for scroll if necessary, but canvas container is usually fixed relative to viewport
-    state.dragStart = getCanvasCoords(e);
+
+    const pos = getCanvasCoords(e);
+    state.dragStart = pos;
+
+    // Start long press timer
+    clearTimeout(longPressTimer);
+    longPressTimer = setTimeout(() => {
+        handleLongPress(pos);
+        state.dragStart = null; // Prevent subsequent click/drag
+    }, LONG_PRESS_DURATION);
 }
 
-function handleCanvasMove(e) { /* Optional visual guide */ }
+function handleCanvasMove(e) {
+    if (!state.dragStart) {
+        clearTimeout(longPressTimer);
+        return;
+    }
+
+    const pos = getCanvasCoords(e);
+    const dx = pos.x - state.dragStart.x;
+    const dy = pos.y - state.dragStart.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // If they move too much, cancel long press
+    if (dist > 10) {
+        clearTimeout(longPressTimer);
+    }
+}
 
 function handleCanvasUp(e) {
+    clearTimeout(longPressTimer);
     if (!state.dragStart || !getCurrentData()) return;
 
     const dragEnd = getCanvasCoords(e);
@@ -414,6 +471,57 @@ function handleCanvasUp(e) {
     }
 
     state.dragStart = null;
+}
+
+function handleLongPress(pos) {
+    const data = getCurrentData();
+    if (!data) return;
+
+    // 1. Check if we should delete an existing region
+    // Priority: Manual regions first (they are usually on top)
+    const manualIdx = data.manualRegions.findIndex(r =>
+        pos.x >= r.box.x && pos.x <= r.box.x + r.box.width &&
+        pos.y >= r.box.y && pos.y <= r.box.y + r.box.height
+    );
+
+    if (manualIdx !== -1) {
+        data.manualRegions.splice(manualIdx, 1);
+        render();
+        return;
+    }
+
+    // Check face regions
+    const face = data.faceRegions.find(r =>
+        pos.x >= r.box.x && pos.x <= r.box.x + r.box.width &&
+        pos.y >= r.box.y && pos.y <= r.box.y + r.box.height
+    );
+
+    if (face) {
+        face.effect = 'none';
+        render();
+        return;
+    }
+
+    // 2. If nothing to delete, add a new one at location
+    const size = Math.min(dom.canvas.width, dom.canvas.height) * 0.15;
+    const x = pos.x - size / 2;
+    const y = pos.y - size / 2;
+
+    data.manualRegions.push({
+        type: 'manual',
+        box: { x, y, width: size, height: size },
+        effect: state.tool,
+        emoji: state.tool === 'emoji' && state.selectedEmoji === 'random'
+            ? RANDOM_EMOJI_POOL[Math.floor(Math.random() * RANDOM_EMOJI_POOL.length)]
+            : state.selectedEmoji
+    });
+
+    render();
+
+    // Vibrate if supported
+    if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+    }
 }
 
 function handleClick(pos) {

@@ -462,6 +462,7 @@ header p {
     justify-content: center;
     cursor: crosshair;
     /* Indicate drawing */
+    touch-action: none;
 }
 
 /* Hero Upload (Updated) */
@@ -685,7 +686,32 @@ canvas {
     }
 
     .hero-content {
-        padding: 1.5rem;
+        padding: 1.5rem 1rem;
+        width: 95%;
+        border-radius: 1.5rem;
+    }
+
+    .hero-content h2 {
+        font-size: 1.4rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .hero-content p {
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.4;
+    }
+
+    .hero-icon-wrapper svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .hero-btn {
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 250px;
     }
 
     .tool-btn {
@@ -695,7 +721,8 @@ canvas {
 
     .tool-group {
         width: 100%;
-        justify-content: space-around;
+        justify-content: center;
+        gap: 8px;
     }
 
     .sub-selector {
@@ -706,8 +733,9 @@ canvas {
     }
 
     .size-limit-group {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: center;
+        width: 100%;
     }
 
     .filename-input {
@@ -718,11 +746,16 @@ canvas {
     .action-group {
         flex-direction: column;
         gap: 0.75rem;
+        width: 100%;
     }
 
     .primary-btn.small-btn {
         width: 100%;
         padding: 0.8rem;
+    }
+
+    .canvas-container {
+        min-height: 350px;
     }
 }
 
