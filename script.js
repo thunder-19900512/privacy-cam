@@ -478,10 +478,11 @@ function handleLongPress(pos) {
     if (!data) return;
 
     // 1. Check if we should delete an existing region
+    const HIT_MARGIN = 20;
     // Priority: Manual regions first (they are usually on top)
     const manualIdx = data.manualRegions.findIndex(r =>
-        pos.x >= r.box.x && pos.x <= r.box.x + r.box.width &&
-        pos.y >= r.box.y && pos.y <= r.box.y + r.box.height
+        pos.x >= r.box.x - HIT_MARGIN && pos.x <= r.box.x + r.box.width + HIT_MARGIN &&
+        pos.y >= r.box.y - HIT_MARGIN && pos.y <= r.box.y + r.box.height + HIT_MARGIN
     );
 
     if (manualIdx !== -1) {
@@ -490,10 +491,10 @@ function handleLongPress(pos) {
         return;
     }
 
-    // Check face regions
+    // Check face regions (face regions are usually larger, but can still have margin)
     const face = data.faceRegions.find(r =>
-        pos.x >= r.box.x && pos.x <= r.box.x + r.box.width &&
-        pos.y >= r.box.y && pos.y <= r.box.y + r.box.height
+        pos.x >= r.box.x - HIT_MARGIN && pos.x <= r.box.x + r.box.width + HIT_MARGIN &&
+        pos.y >= r.box.y - HIT_MARGIN && pos.y <= r.box.y + r.box.height + HIT_MARGIN
     );
 
     if (face) {
@@ -526,6 +527,20 @@ function handleLongPress(pos) {
 
 function handleClick(pos) {
     const data = getCurrentData();
+    const HIT_MARGIN = 20; // Extra margin to make it easier to tap small regions
+
+    // Priority: Manual regions first (they are usually on top)
+    const clickedManualIdx = data.manualRegions.findIndex(r =>
+        pos.x >= r.box.x - HIT_MARGIN && pos.x <= r.box.x + r.box.width + HIT_MARGIN &&
+        pos.y >= r.box.y - HIT_MARGIN && pos.y <= r.box.y + r.box.height + HIT_MARGIN
+    );
+
+    if (clickedManualIdx !== -1) {
+        data.manualRegions.splice(clickedManualIdx, 1);
+        render();
+        return;
+    }
+
     const clickedFace = data.faceRegions.find(r =>
         pos.x >= r.box.x && pos.x <= r.box.x + r.box.width &&
         pos.y >= r.box.y && pos.y <= r.box.y + r.box.height
@@ -544,17 +559,6 @@ function handleClick(pos) {
             }
         }
         render();
-        return;
-    }
-
-    const clickedManualIdx = data.manualRegions.findIndex(r =>
-        pos.x >= r.box.x && pos.x <= r.box.x + r.box.width &&
-        pos.y >= r.box.y && pos.y <= r.box.y + r.box.height
-    );
-
-    if (clickedManualIdx !== -1) {
-        data.manualRegions.splice(clickedManualIdx, 1);
-        render();
     }
 }
 
@@ -564,6 +568,9 @@ function handleDrag(start, end) {
     const y = Math.min(start.y, end.y);
     const width = Math.abs(start.x - end.x);
     const height = Math.abs(start.y - end.y);
+
+    // Prevent creation of tiny regions (below 20px)
+    if (width < 20 || height < 20) return;
 
     data.manualRegions.push({
         type: 'manual',
