@@ -502,7 +502,8 @@ header p {
     /* Enable native pan/zoom in pan mode */
 }
 
-.canvas-container.pan-mode:active {
+.canvas-container.pan-mode:active,
+.canvas-container.panning {
     cursor: grabbing;
 }
 

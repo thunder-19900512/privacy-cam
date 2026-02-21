@@ -11,6 +11,9 @@ const state = {
     isProcessing: false,
     dragStart: null, // {x, y}
     zoom: 1.0, // 1.0 = 100%
+    isPanning: false,
+    panStart: { x: 0, y: 0 },
+    scrollStart: { x: 0, y: 0 }
 };
 
 const RANDOM_EMOJI_POOL = [
@@ -265,16 +268,43 @@ dom.customEmojiInput.addEventListener('focus', () => {
 
 // 3. Canvas Interaction
 dom.canvas.addEventListener('mousedown', (e) => {
-    if (state.tool === 'pan') return; // Let CSS overflow handle it or custom pan
+    if (state.tool === 'pan') {
+        state.isPanning = true;
+        state.panStart = { x: e.clientX, y: e.clientY };
+        state.scrollStart = { x: dom.canvasContainer.scrollLeft, y: dom.canvasContainer.scrollTop };
+        dom.canvasContainer.classList.add('panning');
+        return;
+    }
     handleCanvasDown(e);
 });
+
 dom.canvas.addEventListener('mousemove', (e) => {
-    if (state.tool === 'pan') return;
+    if (state.tool === 'pan') {
+        if (!state.isPanning) return;
+        const dx = e.clientX - state.panStart.x;
+        const dy = e.clientY - state.panStart.y;
+        dom.canvasContainer.scrollLeft = state.scrollStart.x - dx;
+        dom.canvasContainer.scrollTop = state.scrollStart.y - dy;
+        return;
+    }
     handleCanvasMove(e);
 });
+
 dom.canvas.addEventListener('mouseup', (e) => {
-    if (state.tool === 'pan') return;
+    if (state.tool === 'pan') {
+        state.isPanning = false;
+        dom.canvasContainer.classList.remove('panning');
+        return;
+    }
     handleCanvasUp(e);
+});
+
+// Also handle mouse leave to stop panning
+dom.canvas.addEventListener('mouseleave', () => {
+    if (state.isPanning) {
+        state.isPanning = false;
+        dom.canvasContainer.classList.remove('panning');
+    }
 });
 
 // Touch Support
