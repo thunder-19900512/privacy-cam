@@ -485,15 +485,28 @@ header p {
     border-radius: var(--radius-md);
     overflow: auto;
     /* Allow scrolling when zoomed */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
+    /* Change from flex center to block for correct scrolling */
+    text-align: center;
+    /* Center small images horizontally */
     cursor: crosshair;
     /* Indicate drawing */
     touch-action: none;
     -webkit-overflow-scrolling: touch;
     /* Smooth scroll on iOS */
 }
+
+/* Ensure canvas has some space and is centered at small sizes */
+#editorCanvas {
+    display: inline-block;
+    vertical-align: middle;
+    margin: auto;
+}
+
+/* Vertical centering trick using pseudo-element or flex on a wrapper, 
+   but for simplicity, we'll use a container check in JS if needed. 
+   Alternatively, use a min-width/height on the container. */
+
 
 /* Specific cursor for pan tool */
 .canvas-container.pan-mode {
