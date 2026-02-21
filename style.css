@@ -140,6 +140,12 @@ header p {
     transform: translateY(-1px);
 }
 
+.mini-btn {
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    min-width: 32px;
+}
+
 .secondary-btn {
     background: transparent;
     border: 1px solid var(--glass-border);
@@ -409,6 +415,27 @@ header p {
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* Zoom Controls */
+.zoom-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-md);
+    margin-left: 0.5rem;
+}
+
+.zoom-group input[type="range"] {
+    width: 80px;
+    accent-color: var(--primary-color);
+}
+
+#zoomPercent {
+    min-width: 45px;
+    text-align: right;
+}
+
 /* Action Group (Right aligned) */
 .action-group {
     margin-left: auto;
@@ -456,13 +483,27 @@ header p {
     position: relative;
     background: rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-md);
-    overflow: hidden;
+    overflow: auto;
+    /* Allow scrolling when zoomed */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: crosshair;
     /* Indicate drawing */
     touch-action: none;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scroll on iOS */
+}
+
+/* Specific cursor for pan tool */
+.canvas-container.pan-mode {
+    cursor: grab;
+    touch-action: auto;
+    /* Enable native pan/zoom in pan mode */
+}
+
+.canvas-container.pan-mode:active {
+    cursor: grabbing;
 }
 
 /* Hero Upload (Updated) */
@@ -572,9 +613,19 @@ header p {
 }
 
 canvas {
+    max-width: none;
+    /* Disable constraints when zooming */
+    max-height: none;
+    transition: width 0.1s ease-out, height 0.1s ease-out;
+    /* Smooth zoom transition */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background-color: #000;
+}
+
+/* If not zoomed, fit to container */
+canvas.fit-view {
     max-width: 100%;
     max-height: 100%;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .loading-overlay {
@@ -747,6 +798,19 @@ canvas {
         flex-direction: column;
         gap: 0.75rem;
         width: 100%;
+        margin-top: 1rem;
+    }
+
+    .zoom-group {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+
+    .zoom-group input[type="range"] {
+        flex: 1;
+        max-width: 200px;
     }
 
     .primary-btn.small-btn {

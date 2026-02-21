@@ -5,11 +5,12 @@ const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
 const state = {
     images: [], // { id, file, url, img, faceRegions: [], manualRegions: [] }
     currentImageId: null,
-    tool: 'mosaic', // 'mosaic' | 'emoji'
+    tool: 'mosaic', // 'mosaic' | 'emoji' | 'pan'
     selectedEmoji: '☺️', // can be 'random'
     mosaicIntensity: 20, // default
     isProcessing: false,
-    dragStart: null // {x, y}
+    dragStart: null, // {x, y}
+    zoom: 1.0, // 1.0 = 100%
 };
 
 const RANDOM_EMOJI_POOL = [
@@ -40,7 +41,13 @@ const dom = {
     customEmojiInput: document.getElementById('customEmojiInput'),
     themeToggle: document.getElementById('themeToggleBtn'),
     sizeLimitEnabled: document.getElementById('sizeLimitEnabled'),
-    sizeLimitValue: document.getElementById('sizeLimitValue')
+    sizeLimitValue: document.getElementById('sizeLimitValue'),
+    // Zoom Elements
+    zoomSlider: document.getElementById('zoomSlider'),
+    zoomInBtn: document.getElementById('zoomInBtn'),
+    zoomOutBtn: document.getElementById('zoomOutBtn'),
+    zoomPercent: document.getElementById('zoomPercent'),
+    autoDetectBtn: document.getElementById('autoDetectBtn')
 };
 
 const ctx = dom.canvas.getContext('2d');
@@ -48,7 +55,11 @@ const ctx = dom.canvas.getContext('2d');
 // --- Initialization ---
 async function init() {
     try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+        // Load both models for better detection fallback
+        await Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL)
+        ]);
         dom.loadingOverlay.classList.add('hidden');
     } catch (error) {
         console.error('Failed to load models:', error);
@@ -101,16 +112,112 @@ dom.toolBtns.forEach(btn => {
 
         state.tool = target.dataset.tool;
 
+        // Reset visibility of sub-selectors
+        dom.emojiSubSelector.classList.add('hidden');
+        dom.mosaicSubSelector.classList.add('hidden');
+
         if (state.tool === 'emoji') {
             dom.emojiSubSelector.classList.remove('hidden');
-            dom.mosaicSubSelector.classList.add('hidden');
-        } else {
-            dom.emojiSubSelector.classList.add('hidden');
+        } else if (state.tool === 'mosaic') {
             dom.mosaicSubSelector.classList.remove('hidden');
         }
 
-        applyToolToCurrentFaces();
+        // Handle Pan Tool mode
+        if (state.tool === 'pan') {
+            dom.canvasContainer.classList.add('pan-mode');
+        } else {
+            dom.canvasContainer.classList.remove('pan-mode');
+        }
+
+        if (state.tool !== 'pan') {
+            applyToolToCurrentFaces();
+        }
     });
+});
+
+// Zoom Event Listeners
+function updateZoom(newZoom) {
+    state.zoom = Math.min(Math.max(newZoom, 0.5), 4.0);
+    dom.zoomSlider.value = state.zoom * 100;
+    dom.zoomPercent.textContent = `${Math.round(state.zoom * 100)}%`;
+
+    // Apply zoom to canvas style
+    const data = getCurrentData();
+    if (data) {
+        if (state.zoom === 1.0) {
+            dom.canvas.classList.add('fit-view');
+            dom.canvas.style.width = '';
+            dom.canvas.style.height = '';
+        } else {
+            dom.canvas.classList.remove('fit-view');
+            dom.canvas.style.width = `${data.img.width * state.zoom}px`;
+            dom.canvas.style.height = `${data.img.height * state.zoom}px`;
+        }
+    }
+}
+
+dom.zoomSlider.addEventListener('input', (e) => {
+    updateZoom(parseInt(e.target.value, 10) / 100);
+});
+
+dom.zoomInBtn.addEventListener('click', () => {
+    updateZoom(state.zoom + 0.25);
+});
+
+dom.zoomOutBtn.addEventListener('click', () => {
+    updateZoom(state.zoom - 0.25);
+});
+
+dom.autoDetectBtn.addEventListener('click', async () => {
+    const data = getCurrentData();
+    if (!data) return;
+
+    dom.loadingText.textContent = '顔を再検出中...';
+    dom.loadingOverlay.classList.remove('hidden');
+
+    try {
+        // Try both models for maximum sensitivity
+        const [ssdResults, tinyResults] = await Promise.all([
+            faceapi.detectAllFaces(data.img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 })),
+            faceapi.detectAllFaces(data.img, new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.2 }))
+        ]);
+
+        // Merge results (avoiding duplicates is tricky, let's just combine and let user delete)
+        const combinedDetections = [...ssdResults, ...tinyResults];
+
+        // Basic deduplication based on rectangle overlap (simplified)
+        const uniqueDetections = [];
+        combinedDetections.forEach(d => {
+            const isDuplicate = uniqueDetections.some(existing => {
+                const overlapX = Math.max(0, Math.min(d.box.right, existing.box.right) - Math.max(d.box.left, existing.box.left));
+                const overlapY = Math.max(0, Math.min(d.box.bottom, existing.box.bottom) - Math.max(d.box.top, existing.box.top));
+                const area = d.box.area;
+                return (overlapX * overlapY) / area > 0.6; // 60% overlap
+            });
+            if (!isDuplicate) uniqueDetections.push(d);
+        });
+
+        const newFaceRegions = uniqueDetections.map(d => ({
+            type: 'face',
+            box: d.box,
+            effect: state.tool === 'pan' ? 'mosaic' : state.tool, // apply current or default
+            emoji: state.selectedEmoji
+        }));
+
+        // Merge with existing regions, avoiding exact box matches
+        newFaceRegions.forEach(newR => {
+            const exists = data.faceRegions.some(oldR =>
+                Math.abs(oldR.box.x - newR.box.x) < 5 && Math.abs(oldR.box.y - newR.box.y) < 5
+            );
+            if (!exists) data.faceRegions.push(newR);
+        });
+
+        render();
+    } catch (error) {
+        console.error('Recall detection failed:', error);
+    } finally {
+        dom.loadingOverlay.classList.add('hidden');
+    }
 });
 
 dom.mosaicIntensity.addEventListener('input', (e) => {
@@ -157,23 +264,38 @@ dom.customEmojiInput.addEventListener('focus', () => {
 
 
 // 3. Canvas Interaction
-dom.canvas.addEventListener('mousedown', handleCanvasDown);
-dom.canvas.addEventListener('mousemove', handleCanvasMove);
-dom.canvas.addEventListener('mouseup', handleCanvasUp);
+dom.canvas.addEventListener('mousedown', (e) => {
+    if (state.tool === 'pan') return; // Let CSS overflow handle it or custom pan
+    handleCanvasDown(e);
+});
+dom.canvas.addEventListener('mousemove', (e) => {
+    if (state.tool === 'pan') return;
+    handleCanvasMove(e);
+});
+dom.canvas.addEventListener('mouseup', (e) => {
+    if (state.tool === 'pan') return;
+    handleCanvasUp(e);
+});
 
 // Touch Support
 dom.canvas.addEventListener('touchstart', (e) => {
+    if (state.tool === 'pan') return; // Allow native scroll/pinch
+
     // Prevent scrolling when touching the canvas to allow editing
     if (state.currentImageId) e.preventDefault();
     handleCanvasDown(e);
 }, { passive: false });
 
 dom.canvas.addEventListener('touchmove', (e) => {
+    if (state.tool === 'pan') return;
+
     if (state.currentImageId) e.preventDefault();
     handleCanvasMove(e);
 }, { passive: false });
 
 dom.canvas.addEventListener('touchend', (e) => {
+    if (state.tool === 'pan') return;
+
     if (state.currentImageId) e.preventDefault();
     handleCanvasUp(e);
 }, { passive: false });
@@ -270,13 +392,28 @@ async function handleFiles(files) {
             const url = URL.createObjectURL(file);
             const img = await loadImage(url);
 
-            // Detect Faces
-            const detections = await faceapi.detectAllFaces(img, new faceapi.SsdMobilenetv1Options());
+            // Detect Faces - SSD first, Tiny for backup
+            const [ssdDetections, tinyDetections] = await Promise.all([
+                faceapi.detectAllFaces(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })),
+                faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }))
+            ]);
 
-            const faceRegions = detections.map(d => ({
+            // Combine and deduplicate
+            const combined = [...ssdDetections, ...tinyDetections];
+            const unique = [];
+            combined.forEach(d => {
+                const isDuplicate = unique.some(existing => {
+                    const overlapX = Math.max(0, Math.min(d.box.right, existing.box.right) - Math.max(d.box.left, existing.box.left));
+                    const overlapY = Math.max(0, Math.min(d.box.bottom, existing.box.bottom) - Math.max(d.box.top, existing.box.top));
+                    return (overlapX * overlapY) / d.box.area > 0.5;
+                });
+                if (!isDuplicate) unique.push(d);
+            });
+
+            const faceRegions = unique.map(d => ({
                 type: 'face',
                 box: d.box,
-                effect: state.tool,
+                effect: state.tool === 'pan' ? 'mosaic' : state.tool,
                 emoji: state.selectedEmoji
             }));
 
@@ -389,6 +526,9 @@ function selectImage(id) {
     });
 
     dom.heroUpload.classList.add('hidden');
+
+    // Reset zoom for new image
+    updateZoom(1.0);
     render();
 }
 
@@ -596,6 +736,11 @@ function render(targetData = null, targetCtx = null) {
     if (!targetCtx && (dom.canvas.width !== data.img.width || dom.canvas.height !== data.img.height)) {
         dom.canvas.width = data.img.width;
         dom.canvas.height = data.img.height;
+        // Don't modify style.width/height here to preserve zoom
+    }
+
+    if (!targetCtx && state.zoom === 1.0) {
+        dom.canvas.classList.add('fit-view');
     }
 
     context.drawImage(data.img, 0, 0);

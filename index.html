@@ -57,6 +57,9 @@
                         <button class="tool-btn" data-tool="emoji" title="絵文字">
                             <span class="icon">☺️</span> 絵文字
                         </button>
+                        <button class="tool-btn" data-tool="pan" title="移動・ズーム">
+                            <span class="icon">🖐️</span> 移動
+                        </button>
                     </div>
 
                     <!-- Mosaic Settings -->
@@ -77,7 +80,18 @@
                             maxlength="4">
                     </div>
 
+                    <!-- Zoom Controls -->
+                    <div class="zoom-group">
+                        <button id="zoomOutBtn" class="secondary-btn mini-btn" title="縮小">－</button>
+                        <input type="range" id="zoomSlider" min="50" max="400" value="100" step="10">
+                        <button id="zoomInBtn" class="secondary-btn mini-btn" title="拡大">＋</button>
+                        <span id="zoomPercent" class="small-text">100%</span>
+                    </div>
+
                     <div class="action-group">
+                        <button id="autoDetectBtn" class="secondary-btn small-btn" title="顔を再検出">
+                            <span>🔍</span> 再検出
+                        </button>
                         <div class="size-limit-group">
                             <label class="checkbox-container">
                                 <input type="checkbox" id="sizeLimitEnabled">
